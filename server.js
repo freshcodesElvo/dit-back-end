@@ -1,32 +1,31 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
 
-// const express = require('express');
-// const app = express();
-// const tasks = require('./routes/tasks');
-// const connectDB = require('./db/connect')
-// const not_found = require('./middleware/not-found')
-// const error_handler_middleware = require('./middleware/error')
-require('dotenv').config()
+dotenv.config();
 
-//MIDDLEWARE
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.use(express.static('./public'))
+app.use(bodyParser.json());
 
-app.use(express.json());
-//ROUTES
-app.use('/api/v1/tasks', tasks)
-app.use(not_found)
-app.use(error_handler_middleware)
-const port = process.env.PORT || 3000;
+// Import Routes
+const authRoute = require('./routes/auth');
+const propertiesRoute = require('./routes/properties');
 
-const start = async ()=>{
-    try{
-        await connectDB(process.env.MONGO_URL)
-        app.listen(port, console.log(`Server listening on port ${port}...`))
-    }
-    catch (err){
-        console.log(err)
+// Route Middlewares
+app.use('/api/user', authRoute);
+app.use('/api/properties', propertiesRoute);
 
-    }
+mongoose.connect(process.env.DB_CONNECTION, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.error(err));
 
-}
-start()
+app.get('/', (req, res) => {
+    res.send('Welcome to the Rental Chatbot API');
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
