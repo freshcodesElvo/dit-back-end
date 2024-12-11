@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    firstName: { type: String, required: true },
+    secondName: { type: String, required: true },
+    username: { type: String, required: true, unique: true }, // Add username
     email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property' }],
     search_history: [String]
 });
