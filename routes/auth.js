@@ -2,27 +2,43 @@ const router = require('express').Router();
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
+const dotenv = require('dotenv');
+
+async function verifyEmail(email) {
+    const url = `https://api.zerobounce.net/v2/validate?api_key=${process.env.ZEROBOUNCE_API_KEY}&email=${email}`;
+    try {
+        const response = await axios.get(url);
+        console.log('Email verification response:', response.data); // Log the response
+        return response.data;
+    } catch (error) {
+        console.error('Error verifying email:', error);
+        return null;
+    }
+}
+
 
 // User Registration
 router.post('/register', async (req, res) => {
-    const { firstName, secondName, username, email, password} = req.body;
+    const { firstName, secondName, username, email, password } = req.body;
+
     try {
+        const emailVerification = await verifyEmail(email);
+        if (!emailVerification || emailVerification.status !== 'valid') {
+            return res.status(400).json({ message: 'Invalid or undeliverable email address' });
+        }
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);  // Hash the password with bcrypt
-        console.log('Generated hashed password for registration:', hashedPassword);
-        const user = new User({ firstName,secondName, username,  email, password: hashedPassword  });
-        //const user = new User({ username, password, email });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({ firstName, secondName, username, email, password: hashedPassword });
         await user.save();
-        
 
-        console.log('User registered:', user);
         res.status(201).json({ message: 'User registered successfully' });
     } catch (err) {
-        console.error('Registration error:', err);
         res.status(500).json({ message: err.message });
     }
 });
